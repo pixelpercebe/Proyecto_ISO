@@ -30,9 +30,9 @@ int extrae_fichero(char * f_mysha256_Repo, char * f_dat)
     }
     //while (lseek(fd_repo)>0)
 
-    if ((n = read(fd_repo, &my_read_sha256header, sizeof(my_read_sha256header)))==sizeof(my_read_sha256header)) {
+    if ((n = read(fd_repo, &my_read_sha256header, sizeof(my_read_sha256header)-1))==sizeof(my_read_sha256header)-1) {
         printf("\nNombre del archivo: %s\n", my_read_sha256header.fname);
-        printf("\ntamaño del archivo: %s\n", my_read_sha256header.size);
+        printf("\ntamaño del archivo: %ld\n", my_read_sha256header.size);
 
     }
     else

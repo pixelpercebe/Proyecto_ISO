@@ -27,7 +27,15 @@ int insertar_fichero(char RepoFileName[256])
 
 // function that opens a RepoFile with lseek and header.
 int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header) {
+    
+    if (RepoFileName == NULL || RepoFileName[0] == '\0') {
+        fprintf(stderr, "Invalid file RepoName.\n");
+        return ERROR_OPEN_FILE;
+    }
+
     int fd_RepoFile = open(RepoFileName, O_WRONLY | O_CREAT, 0600);
+
+    
     if (fd_RepoFile == -1) 
     {
         fprintf(stderr, "Cannot open file RepoFileName %s\n", RepoFileName);
@@ -39,9 +47,6 @@ int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header
         return E_DESCO;
     }
 
-    if (RepoFileName == NULL || RepoFileName[0] == '\0') {
-        fprintf(stderr, "Invalid file RepoName.\n");
-        return ERROR_OPEN_FILE;
-    }
+
     return fd_RepoFile; //exito
 }

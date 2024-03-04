@@ -91,6 +91,7 @@ unsigned long WriteFileDataBlocks(int fd_DataFile, int fd_RepoFile)
     return NumWriteBytes;
 }
 
+/**
 int update_header(int fd_RepoFile, struct c_sha256header *header)
 {
     //fd_RepoFile is open
@@ -104,7 +105,7 @@ int update_header(int fd_RepoFile, struct c_sha256header *header)
             my_read_sha256header.size  = header->size;
         }
     }
-}
+}*/
 
 int main(int argc, char *argv[])
 {
@@ -122,6 +123,7 @@ int main(int argc, char *argv[])
     char *buffer;
 
     char operation;
+    off_t savedpos;
 
     if (argc != 4)
     {
@@ -154,8 +156,13 @@ int main(int argc, char *argv[])
                 fprintf(stderr, " Error inserting(err=%d) \n", fd_RepoFile);
                 return WRONG_INSERT_OR_EXTRACT_FLAG;
             }   
-
-                // Write  my_sha256 header (of FileName) to the Reository File (RepoFileName)
+            //safe header pos
+            if((savedpos = lseek(fd_RepoFile,0,SEEK_CUR))==(off_t)-1)
+            {
+                fprintf(stderr,"Error when scrolling through the content");
+                return ERROR_WRITE_FILE;
+            }
+            // Write  my_sha256 header (of FileName) to the Reository File (RepoFileName)
             RepoFileSize = 0;
             n = write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header));
             RepoFileSize = RepoFileSize + n;     
@@ -177,16 +184,18 @@ int main(int argc, char *argv[])
             }
 
             /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            struct c_sha256header my_sha256header_final;
+            
             // Call to WriteFileDataBlocks function
             Tam = WriteFileDataBlocks(fd_DatFile, fd_RepoFile);
             RepoFileSize = RepoFileSize + Tam;
             my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
-            if((lseek(fd_RepoFile,-(RepoFileSize-1),SEEK_END))==-1)
+
+            if((lseek(fd_RepoFile,savedpos,SEEK_SET))==(off_t)-1)
             {
                 fprintf(stderr,"Error when scrolling through the content");
                 return ERROR_WRITE_FILE;
             }
+            printf("\nmy_sha256header size  = %lld\n", my_sha256header.size);
             if (write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header)) == -1)
             {
                 fprintf(stderr,"Error defining size");
