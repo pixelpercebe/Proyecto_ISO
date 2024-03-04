@@ -21,6 +21,7 @@ extern int sha256sum_file(char *path, char outputBuffer[]); // HEX_SHA256_HASH_S
 extern void sha256_hash_to_string(unsigned char *hash, unsigned char *outputBuffer);
 extern int insertar_fichero(char RepoFileName[256]);
 extern int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header);
+extern int extrae_fichero(char * f_mysha256_Repo, char * f_dat);
 
 
 // Build RepoHeader structure with FileName (fill a new RepoHeader)
@@ -90,6 +91,20 @@ unsigned long WriteFileDataBlocks(int fd_DataFile, int fd_RepoFile)
     return NumWriteBytes;
 }
 
+int update_header(int fd_RepoFile, struct c_sha256header *header)
+{
+    //fd_RepoFile is open
+    int headerPos = 0;
+    char strh1[FILE_HEADER_SIZE];
+    struct c_sha256header my_read_sha256header;
+    while((lseek(fd_RepoFile,headerPos, SEEK_SET)) == (off_t)-1) {
+        if ((read(fd_RepoFile,&my_read_sha256header,sizeof(my_read_sha256header)))==sizeof(my_read_sha256header))
+        {
+            if (memcmp(my_read_sha256header.hash, header->hash, HEX_SHA256_HASH_SIZE) != 0)
+            my_read_sha256header.size  = header->size;
+        }
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -106,7 +121,7 @@ int main(int argc, char *argv[])
     int fd_DatFile, fd_RepoFile;
     char *buffer;
 
-
+    char operation;
 
     if (argc != 4)
     {
@@ -115,7 +130,7 @@ int main(int argc, char *argv[])
     }
     strcpy(FileName, argv[2]);
     strcpy(RepoFileName, argv[3]);
-
+    operation = argv[1][0];
 
     // ------------------------------------------------------------------------------
     // Build my_sha256header structure with FileName info
@@ -130,60 +145,83 @@ int main(int argc, char *argv[])
 
     // ----------------------------------------------------------------
     // open sha256 Repository File and Check flags for call insert
-    else if (argv[1][0] == 'I')
+    switch (operation)
     {
-        //Openning file with O_Append
-        ///fd_RepoFile = insertar_fichero(RepoFileName);
+        case 'I':
+            printf("INSERTAR\n");
+            if ((fd_RepoFile = insertar_fichero_lseek(RepoFileName, &my_sha256header)) < 0) 
+            {
+                fprintf(stderr, " Error inserting(err=%d) \n", fd_RepoFile);
+                return WRONG_INSERT_OR_EXTRACT_FLAG;
+            }   
 
-        //using lseek to move the file descriptor to the last position in the file.
-        if ((fd_RepoFile = insertar_fichero_lseek(RepoFileName, &my_sha256header)) < 0) 
-        {
-            fprintf(stderr, " Error opening ReportFile to insert(err=%d) \n", fd_RepoFile);
-        }   
-    }
-    else{return WRONG_INSERT_OR_EXTRACT_FLAG;}
+                // Write  my_sha256 header (of FileName) to the Reository File (RepoFileName)
+            RepoFileSize = 0;
+            n = write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header));
+            RepoFileSize = RepoFileSize + n;     
+            my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
+            printf(" (my_sha256 header) written %ld bytes to file %s \n", n, RepoFileName); // Traze
+
+            // ----------------------------------------------------------------
+            // write the data file (FileName) to RepoFile (it is already open)
+            // must be written in blocks of 4096 bytes(4KB)
+
+            // open FileName only for read
+            /// To complete the code
+            /// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+            if ((fd_DatFile = open(FileName, O_RDONLY)) == -1)
+            {
+                fprintf(stderr, "Cannot open file FileName %s\n", argv[2]);
+                return ERROR_OPEN_DAT_FILE;
+            }
+
+            /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            struct c_sha256header my_sha256header_final;
+            // Call to WriteFileDataBlocks function
+            Tam = WriteFileDataBlocks(fd_DatFile, fd_RepoFile);
+            RepoFileSize = RepoFileSize + Tam;
+            my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
+            if((lseek(fd_RepoFile,-(RepoFileSize-1),SEEK_END))==-1)
+            {
+                fprintf(stderr,"Error when scrolling through the content");
+                return ERROR_WRITE_FILE;
+            }
+            if (write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header)) == -1)
+            {
+                fprintf(stderr,"Error defining size");
+                return ERROR_WRITE_FILE;
+
+            }
+
+            // Close data file (FileName)
+            ///  To complete the code
+            /// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+            // close the file
+            if ((close(fd_DatFile)) == -1)
+            {
+                fprintf(stderr, "Error closing FileName%s\n", argv[2]);
+                return ERROR_CLOSE_FILE;
+            }
+            break;
+        case 'E':
+            printf("EXTRAER\n");
+            if ((fd_RepoFile = extrae_fichero(RepoFileName, FileName)) < 0) 
+            {
+                fprintf(stderr, " Error extracting(err=%d) \n", fd_RepoFile);
+                return WRONG_INSERT_OR_EXTRACT_FLAG;
+            }               
+            break;
+        default: 
+            fprintf(stderr,"Error with the first argument of the call, the argument must be I for insert or E for extract\n");
+            return WRONG_INSERT_OR_EXTRACT_FLAG;
+            break;
+        }
 
 
     // ----------------------------------------------------------------
-    // Write  my_sha256 header (of FileName) to the Reository File (RepoFileName)
-    RepoFileSize = 0;
-    n = write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header));
-    RepoFileSize = RepoFileSize + n;     
-    my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
-    printf(" (my_sha256 header) written %ld bytes to file %s \n", n, RepoFileName); // Traze
 
-    // ----------------------------------------------------------------
-    // write the data file (FileName) to RepoFile (it is already open)
-    // must be written in blocks of 4096 bytes(4KB)
-
-    // open FileName only for read
-    /// To complete the code
-    /// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-    if ((fd_DatFile = open(FileName, O_RDONLY)) == -1)
-    {
-        fprintf(stderr, "Cannot open file FileName %s\n", argv[2]);
-        return ERROR_OPEN_DAT_FILE;
-    }
-
-    /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    // Call to WriteFileDataBlocks function
-    Tam = WriteFileDataBlocks(fd_DatFile, fd_RepoFile);
-    RepoFileSize = RepoFileSize + Tam;
-    my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size  
-
-
-    // Close data file (FileName)
-    ///  To complete the code
-    /// vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-    // close the file
-    if ((close(fd_DatFile)) == -1)
-    {
-        fprintf(stderr, "Error closing FileName%s\n", argv[2]);
-        return ERROR_CLOSE_FILE;
-    }
 
     /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

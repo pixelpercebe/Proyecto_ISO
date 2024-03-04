@@ -8,7 +8,7 @@ else
 fi
 echo "Hola  que tal..." > pruebas/f1.dat ; seq 1 1000 >> pruebas/f1.dat
 
-./mysha256-repo I pruebas/f1.dat  repositorio1.rep
+./mysha256-repo E pruebas/f1.dat  repositorio1.rep
 
 sha256sum  pruebas/f1.dat
 

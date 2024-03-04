@@ -24,7 +24,8 @@
 #define ERROR_OTHER_2 (-15)
 
 #define E_OPEN1 (-16)
-#define E_OPEN2 (-17)
+#define E_NOEXIST (-17) 
 #define E_REPOFORM (-18)
 #define WRONG_INSERT_OR_EXTRACT_FLAG (-19)
+#define E_CREATDEST (-20) 
 #define E_DESCO (-99)
