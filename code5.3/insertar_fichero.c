@@ -47,6 +47,6 @@ int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header
         return E_DESCO;
     }
 
-
+    printf("\nFD POS: %d\n", lseek(fd_RepoFile, 0, SEEK_CUR));//delete
     return fd_RepoFile; //exito
 }

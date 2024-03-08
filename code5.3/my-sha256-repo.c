@@ -87,8 +87,15 @@ unsigned long WriteFileDataBlocks(int fd_DataFile, int fd_RepoFile)
     }
     /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+    unsigned long bytesFaltantes = DATAFILE_BLOCK_SIZE - (NumWriteBytes % DATAFILE_BLOCK_SIZE);
+    if (bytesFaltantes > 0 && bytesFaltantes < DATAFILE_BLOCK_SIZE) 
+    {
+        char bufferCeros[DATAFILE_BLOCK_SIZE] = {0}; // Inicializa un buffer con ceros.
+        write(fd_RepoFile, bufferCeros, bytesFaltantes); // Escribe los bytes faltantes como ceros.
+    }
+
     printf("\n Total : %ld  bytes writen \n", NumWriteBytes); // Traze
-    return NumWriteBytes;
+    return (NumWriteBytes + bytesFaltantes);
 }
 
 /**
@@ -134,15 +141,7 @@ int main(int argc, char *argv[])
     strcpy(RepoFileName, argv[3]);
     operation = argv[1][0];
 
-    // ------------------------------------------------------------------------------
-    // Build my_sha256header structure with FileName info
-    bzero(&my_sha256header, sizeof(my_sha256header));
-    ret = Builsha256RepoHeader(FileName, &my_sha256header);
-    if (ret != HEADER_OK)
-    {
-        fprintf(stderr, "The sha256header data was not generated correctly\n");
-        return ERROR_GENERATE_SHA256_HEADER;
-    }
+
 
 
     // ----------------------------------------------------------------
@@ -151,22 +150,34 @@ int main(int argc, char *argv[])
     {
         case 'I':
             printf("INSERTAR\n");
+
+            // ------------------------------------------------------------------------------
+            // Build my_sha256header structure with FileName info
+            bzero(&my_sha256header, sizeof(my_sha256header));
+            ret = Builsha256RepoHeader(FileName, &my_sha256header);
+            if (ret != HEADER_OK)
+            {
+                fprintf(stderr, "The sha256header data was not generated correctly\n");
+                return ERROR_GENERATE_SHA256_HEADER;
+            }
+
             if ((fd_RepoFile = insertar_fichero_lseek(RepoFileName, &my_sha256header)) < 0) 
             {
                 fprintf(stderr, " Error inserting(err=%d) \n", fd_RepoFile);
                 return WRONG_INSERT_OR_EXTRACT_FLAG;
             }   
+
             //safe header pos
             if((savedpos = lseek(fd_RepoFile,0,SEEK_CUR))==(off_t)-1)
             {
                 fprintf(stderr,"Error when scrolling through the content");
                 return ERROR_WRITE_FILE;
             }
+
             // Write  my_sha256 header (of FileName) to the Reository File (RepoFileName)
             RepoFileSize = 0;
             n = write(fd_RepoFile, &my_sha256header, sizeof(my_sha256header));
-            RepoFileSize = RepoFileSize + n;     
-            my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
+            RepoFileSize = RepoFileSize + n;
             printf(" (my_sha256 header) written %ld bytes to file %s \n", n, RepoFileName); // Traze
 
             // ----------------------------------------------------------------
@@ -184,11 +195,10 @@ int main(int argc, char *argv[])
             }
 
             /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            
             // Call to WriteFileDataBlocks function
             Tam = WriteFileDataBlocks(fd_DatFile, fd_RepoFile);
             RepoFileSize = RepoFileSize + Tam;
-            my_sha256header.size = (my_sha256header.size) + RepoFileSize; // Actualize RepoFileSize file size
+            my_sha256header.size = (off_t)(my_sha256header.size + RepoFileSize); // Actualize RepoFileSize file size
 
             if((lseek(fd_RepoFile,savedpos,SEEK_SET))==(off_t)-1)
             {
@@ -214,6 +224,8 @@ int main(int argc, char *argv[])
                 return ERROR_CLOSE_FILE;
             }
             break;
+
+
         case 'E':
             printf("EXTRAER\n");
             if ((fd_RepoFile = extrae_fichero(RepoFileName, FileName)) < 0) 

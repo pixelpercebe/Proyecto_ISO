@@ -7,7 +7,7 @@ if [ ! -d "pruebas" ]; then
 else
     echo "La carpeta 'pruebas' ya existe."
 fi
-echo "Hello how are you...This is  a new test" > pruebas/f1.dat ; seq 1 1000 >> pruebas/f1.dat
+echo "Hello how...This is  a new test" > pruebas/f1.dat ; seq 1 1000 >> pruebas/f1.dat
 
 # execute mysha256-repo to Insert a file (I)  ("I" is a new argument of mysha256-repo.)
 ./mysha256-repo  I  pruebas/f1.dat repositorio1.rep
