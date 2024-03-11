@@ -64,19 +64,23 @@ int extrae_fichero(char * f_mysha256_Repo, char * f_dat)
         }
         else
         {
-            fprintf(stderr,"\nFILE NOT FOUND\n");
+            write(1,"\nFILE NOT FOUND\n",18);
             return OK;
         }
         
     }
 
-    //TODO - convert to file creation function
     if (!is_not_header)
     {
-        write(1,"\nFile found\n",13);
+        write(1,"\nFILE FOUND\n",14);
         printf("\nFile hash: %s\n", my_readed_sha256header.hash);
         printf("\nFile name: %s\n", my_readed_sha256header.fname);
-        create_file(fd_repo,&my_readed_sha256header);
+        if (create_file(fd_repo,&my_readed_sha256header) < 0)
+        {
+            write(1,"\nError creating destination file for the extracted file\n",58);
+            return E_CREATDEST;
+        }
+        
     }
     return fd_repo;
 }
@@ -85,14 +89,20 @@ int extrae_fichero(char * f_mysha256_Repo, char * f_dat)
 int create_file(int fd_repo, struct c_sha256header *my_readed_sha256header)
 {
     int blocks_to_read= 0;
-    int fd_newfile = open(my_readed_sha256header->fname, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    int fd_newfile;
     int i,n;
     char FileDataBlock[DATAFILE_BLOCK_SIZE];
 
+    if((fd_newfile = open(my_readed_sha256header->fname, O_WRONLY | O_CREAT | O_TRUNC, 0600))<0)
+    {
+        fprintf(stderr,"Error opening new destination file in extract: %s\n",ERROR_OPEN_DAT_FILE);
+        return ERROR_OPEN_DAT_FILE;
+    }
+
     printf("\nheader size = %ld\n",my_readed_sha256header->size);
     blocks_to_read = my_readed_sha256header->size / DATAFILE_BLOCK_SIZE;
-    printf("\nblocks = %ld\n",blocks_to_read);
-    //escribir datos
+    printf("\nblocks = %ld\n",blocks_to_read);    
+
     for (i = 0; i < blocks_to_read; i++){
         if((n = read(fd_repo,FileDataBlock,DATAFILE_BLOCK_SIZE))==-1)
         {
@@ -104,4 +114,10 @@ int create_file(int fd_repo, struct c_sha256header *my_readed_sha256header)
         }
     }
     
+    if ((close(fd_newfile)) == -1)
+    {
+        fprintf(stderr,"Error closing new destination file in extract: %s\n",ERROR_CLOSE_FILE );
+        return ERROR_CLOSE_FILE;
+    }
+    return OK;
 }

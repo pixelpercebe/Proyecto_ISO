@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     switch (operation)
     {
         case 'I':
-            printf("INSERTAR\n");
+            printf("INSERT\n");
 
             // ------------------------------------------------------------------------------
             // Build my_sha256header structure with FileName info
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 
 
         case 'E':
-            printf("EXTRAER\n");
+            printf("EXTRACT\n");
             if ((fd_RepoFile = extrae_fichero(RepoFileName, FileName)) < 0) 
             {
                 fprintf(stderr, " Error extracting(err=%d) \n", fd_RepoFile);
