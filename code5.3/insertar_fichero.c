@@ -26,7 +26,7 @@ int insertar_fichero(char RepoFileName[256])
 
 
 // function that opens a RepoFile with lseek and header.
-int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header) {
+int insertar_fichero_lseek(char RepoFileName[256]) {
     
     if (RepoFileName == NULL || RepoFileName[0] == '\0') {
         fprintf(stderr, "Invalid file RepoName.\n");

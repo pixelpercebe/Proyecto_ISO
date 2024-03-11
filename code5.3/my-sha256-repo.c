@@ -20,7 +20,7 @@
 extern int sha256sum_file(char *path, char outputBuffer[]); // HEX_SHA256_HASH_SIZE Bytes
 extern void sha256_hash_to_string(unsigned char *hash, unsigned char *outputBuffer);
 extern int insertar_fichero(char RepoFileName[256]);
-extern int insertar_fichero_lseek(char RepoFileName[256], struct c_sha256header *header);
+extern int insertar_fichero_lseek(char RepoFileName[256]);
 extern int extrae_fichero(char * f_mysha256_Repo, char * f_dat);
 
 
@@ -98,21 +98,7 @@ unsigned long WriteFileDataBlocks(int fd_DataFile, int fd_RepoFile)
     return (NumWriteBytes + bytesFaltantes);
 }
 
-/**
-int update_header(int fd_RepoFile, struct c_sha256header *header)
-{
-    //fd_RepoFile is open
-    int headerPos = 0;
-    char strh1[FILE_HEADER_SIZE];
-    struct c_sha256header my_read_sha256header;
-    while((lseek(fd_RepoFile,headerPos, SEEK_SET)) == (off_t)-1) {
-        if ((read(fd_RepoFile,&my_read_sha256header,sizeof(my_read_sha256header)))==sizeof(my_read_sha256header))
-        {
-            if (memcmp(my_read_sha256header.hash, header->hash, HEX_SHA256_HASH_SIZE) != 0)
-            my_read_sha256header.size  = header->size;
-        }
-    }
-}*/
+
 
 int main(int argc, char *argv[])
 {
@@ -161,7 +147,7 @@ int main(int argc, char *argv[])
                 return ERROR_GENERATE_SHA256_HEADER;
             }
 
-            if ((fd_RepoFile = insertar_fichero_lseek(RepoFileName, &my_sha256header)) < 0) 
+            if ((fd_RepoFile = insertar_fichero_lseek(RepoFileName)) < 0) 
             {
                 fprintf(stderr, " Error inserting(err=%d) \n", fd_RepoFile);
                 return WRONG_INSERT_OR_EXTRACT_FLAG;
@@ -232,7 +218,8 @@ int main(int argc, char *argv[])
             {
                 fprintf(stderr, " Error extracting(err=%d) \n", fd_RepoFile);
                 return WRONG_INSERT_OR_EXTRACT_FLAG;
-            }               
+            }
+            
             break;
         default: 
             fprintf(stderr,"Error with the first argument of the call, the argument must be I for insert or E for extract\n");

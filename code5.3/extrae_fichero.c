@@ -50,9 +50,7 @@ int extrae_fichero(char * f_mysha256_Repo, char * f_dat)
             }
             else
             {
-                //data_size = (my_readed_sha256header.size)-FILE_HEADER_SIZE; //saves the size of the data block to be skipped
-                printf("\nData name: %s\n", my_readed_sha256header.fname);
-                printf("\nData hash: %s\n", my_readed_sha256header.hash);
+                printf("\nName dont match: %s\n", my_readed_sha256header.fname);
                 header_pos = my_readed_sha256header.size-FILE_HEADER_SIZE;
                 
                 if (lseek(fd_repo, header_pos, SEEK_CUR) == (off_t)-1)
@@ -72,11 +70,38 @@ int extrae_fichero(char * f_mysha256_Repo, char * f_dat)
         
     }
 
+    //TODO - convert to file creation function
     if (!is_not_header)
     {
-        printf("\nFile name: %s\n", my_readed_sha256header.fname);
-        printf("\nFile hash: %s\n", my_readed_sha256header.hash);
         write(1,"\nFile found\n",13);
+        printf("\nFile hash: %s\n", my_readed_sha256header.hash);
+        printf("\nFile name: %s\n", my_readed_sha256header.fname);
+        create_file(fd_repo,&my_readed_sha256header);
     }
     return fd_repo;
+}
+
+
+int create_file(int fd_repo, struct c_sha256header *my_readed_sha256header)
+{
+    int blocks_to_read= 0;
+    int fd_newfile = open(my_readed_sha256header->fname, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    int i,n;
+    char FileDataBlock[DATAFILE_BLOCK_SIZE];
+
+    printf("\nheader size = %ld\n",my_readed_sha256header->size);
+    blocks_to_read = my_readed_sha256header->size / DATAFILE_BLOCK_SIZE;
+    printf("\nblocks = %ld\n",blocks_to_read);
+    //escribir datos
+    for (i = 0; i < blocks_to_read; i++){
+        if((n = read(fd_repo,FileDataBlock,DATAFILE_BLOCK_SIZE))==-1)
+        {
+            return ERROR_READ_FILE;
+        }
+        if (write(fd_newfile,FileDataBlock,n)==-1)
+        {
+            return ERROR_WRITE_FILE;
+        }
+    }
+    
 }
