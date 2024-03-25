@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include "s_my_sha256header.h"
 #include "codes.h"
@@ -139,6 +140,21 @@ int main(int argc, char *argv[])
 
             // ------------------------------------------------------------------------------
             // Build my_sha256header structure with FileName info
+            char Reference[256];
+            char Line[256];
+            DIR *fdir;
+            struct dirent *entry;
+            if ((fdir = opendir(FileName))==NULL)
+                fprintf(stderr,"opendir error\n");
+            else{
+                while ((entry = readdir (fdir))!=NULL)
+                {
+                    sprintf(Reference, "%s/%s", FileName, entry->d_name);
+                    sprintf(Line, "%8d \t %s\n", entry->d_ino, Reference);
+                    write(1, Line, strlen(Line));
+                }
+            }
+
             bzero(&my_sha256header, sizeof(my_sha256header));
             ret = Builsha256RepoHeader(FileName, &my_sha256header);
             if (ret != HEADER_OK)
