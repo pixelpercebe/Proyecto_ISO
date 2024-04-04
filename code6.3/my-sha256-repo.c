@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
     char FileName[256];
     char RepoFileName[256]; // Sha256 repository file name
     char dirName[256];
-    int RepoFileSize;
+    int RepoFileSize = 0;
 
 
     if (argc != 4)
@@ -230,12 +230,19 @@ int main(int argc, char *argv[])
             char Line[256];
             DIR *fdir;
             struct dirent *entry;
-            int fileCount = 0;
             if ((fdir = opendir(FileName))==NULL)
             {
                 fprintf(stdout,"Not directory path\n");
-                fileCount = 1;
-                RepoFileSize = write_file(FileName,RepoFileName);
+                fd_DatFile = open(FileName, O_WRONLY, 0600);
+                if (fd_DatFile == -1)
+                {
+                    fprintf(stderr, "Cannot open file FileName %s\n", FileName);
+                    return ERROR_OPEN_DAT_FILE;
+                }
+                else 
+                {
+                    RepoFileSize = write_file(FileName,RepoFileName);
+                }
             }
             
             else
@@ -246,16 +253,11 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     sprintf(Reference, "%s/%s", FileName, entry->d_name);
-                    sprintf(Line, "%8d \t %s\n", entry->d_ino, Reference);
-                    fileCount = fileCount + 1;
+                    sprintf(Line, "\t %s\n", Reference);
                     write(1, Line, strlen(Line));
                     RepoFileSize = RepoFileSize + write_file(Reference,RepoFileName);
-                    
-                    
                 }
             }
-            
-            fprintf(stdout,"\n%d\n",fileCount);
             break;
         case 'E':
             printf("EXTRACT\n");
@@ -286,10 +288,13 @@ int main(int argc, char *argv[])
     }
 
     /// ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    // Final message to user
+    ///final message
+    if (fd_DatFile == -1)
+    {
+        return ERROR_OPEN_SHA_REPO_FILE;
+    }
     printf("  %s  RepoFileName of %s  data file  has been generated (Repo Size: %ld bytes) \n",
-           RepoFileName,  dirName, RepoFileSize);
+        RepoFileName,  dirName, RepoFileSize);
 
     return OK;
-} // (OK=0)
+} 

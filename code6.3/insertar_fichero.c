@@ -47,26 +47,7 @@ int insertar_fichero_lseek(char RepoFileName[256]) {
         return E_DESCO;
     }
 
-    printf("\nFD POS: %d\n", lseek(fd_RepoFile, 0, SEEK_CUR));//delete
-    return fd_RepoFile; //exito
+    return fd_RepoFile; 
 }
-
-/**
-int insertar_directorio(char directoryPath[256])
-{
-    char Reference[256];
-    char Line[256];
-    DIR *fdir;
-    struct dirent *entry;
-    if ((fdir = opendir (argv[1]))==NULL)
-    error("opendir");
-    while ((entry = readdir (fdir))!=NULL)
-    {
-        sprintf(Reference, "%s/%s", argv[1], entry->d_name);
-        sprintf(Line, "%8d \t %s\n", entry->d_ino, Reference);
-        write(1, Line, strlen(Line));
-    }
-    closedir (fdir);
-    }*/
 
 
