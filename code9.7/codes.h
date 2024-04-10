@@ -1,0 +1,33 @@
+#define DATAFILE_BLOCK_SIZE  4096
+
+#define OK (0)
+#define ERROR_WRONG_NUMBER_ARGUMENTS (-1)
+
+#define ERROR_WRITE_FILE (-2)
+#define ERROR_READ_FILE (-3)
+#define ERROR_OPEN_FILE (-4)
+#define ERROR_CLOSE_FILE (-5)
+
+#define HEADER_OK (-6)
+#define HEADER_ERR (-7)
+
+#define SHA256_GEN_ERR (-8)
+#define ERROR_GENERATE_SHA256_HEADER (-9)
+
+#define ERROR_GENERATE_SHA_REPO_FILE (-10)
+#define ERROR_GENERATE_SHA_REPO_FILE2 (-11)
+
+#define ERROR_OPEN_DAT_FILE (-12)
+#define ERROR_OPEN_SHA_REPO_FILE (-13)
+
+#define ERROR_OTHER_1 (-14)
+#define ERROR_OTHER_2 (-15)
+
+#define E_OPEN1 (-16)
+#define E_NOEXIST (-17) 
+#define E_REPOFORM (-18)
+#define WRONG_INSERT_OR_EXTRACT_FLAG (-19)
+#define E_CREATDEST (-20)
+#define ERROR_STAT (-21)
+#define ERROR_CHANGING_PERMISSIONS (-22)
+#define E_DESCO (-99)
